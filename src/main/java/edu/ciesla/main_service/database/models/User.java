@@ -1,13 +1,18 @@
 package edu.ciesla.main_service.database.models;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import edu.ciesla.main_service.database.HibernateConfig;
+import edu.ciesla.main_service.database.models.exceptions.Unidentified;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
-import java.util.ArrayList;
+import java.util.*;
 
 @Entity
 @Table(name = "user", uniqueConstraints=@UniqueConstraint(columnNames = {"ID_user"}))
@@ -28,8 +33,31 @@ public class User {
     @Column(name = "password", nullable = true)
     String password;
 
+    @ManyToMany(cascade = { CascadeType.ALL })
+    @JoinTable(name="playlist_owners", joinColumns = @JoinColumn(name="user"), inverseJoinColumns = @JoinColumn(name = "Playlist"))
+    Set<Playlist> playlists= new HashSet<>();
+
+    @ManyToMany(cascade = { CascadeType.ALL })
+    @JoinTable(name="room_owners", joinColumns = @JoinColumn(name="user"), inverseJoinColumns = @JoinColumn(name = "room"))
+    Set<Room> rooms = new HashSet<>();
+
     public User(){}
+    public User(String nickname, String password){
+        this.nickname =nickname;
+        this.password = BCrypt.hashpw(password,BCrypt.gensalt(12));
+    }
+
+
+    public boolean checkPw(String password){
+        return BCrypt.checkpw(password,this.password);
+    }
     public String generateToken(){
+        Algorithm algoritmHS = Algorithm.HMAC256("82CQCZxcDw");
+        Map<String, Object> map = new HashMap<>();
+        map.put("alg", "HMAC256");
+        map.put("type", "JWT");
+
+        this.user_token = JWT.create().withIssuer("SnB").withHeader(map).withClaim("id",this.id).sign(algoritmHS);
         return user_token;
     }
     public String getToken() {
@@ -49,7 +77,7 @@ public class User {
 
     //-------------------------------------------------------------------STATIC:
     public static ArrayList<User> getUser(int ...ids){
-        ArrayList<User> returnVale;
+        ArrayList<User> returnVale = new ArrayList<>();
         String sql = "SELECT * FROM `user`";
         if(ids.length>0){
             sql=sql.concat(" WHERE");
@@ -61,9 +89,27 @@ public class User {
         try{
             returnVale = getCommand(sql);
         }catch (Exception e){
-            e.printStackTrace();
-            return null;
+            return returnVale;
         }
+        return returnVale;
+    }
+
+    public static User addUser(String nickname, String password) throws Exception {
+        //String sql = "INSERT INTO `user` (`ID_user`, `nickname`, `user_token`, `Password`) VALUES (NULL, "+nickname+", NULL, "+password+")";
+        User returnVale = new User(nickname,password);
+        Session session = HibernateConfig.getSessionFactory().openSession();
+        Transaction tx;
+        Exception exception=null;
+        try {
+            tx = session.beginTransaction();
+            session.save(returnVale);
+            tx.commit();
+        }catch (Exception e){
+            exception = e;
+        }finally {
+            session.close();
+        }
+        if(exception != null) throw exception;
         return returnVale;
     }
 
@@ -78,7 +124,29 @@ public class User {
         return returnVale;
     }
 
+    public static String authorize(int id, String password) throws Exception {
+        User user = getUser(id).get(0);
+        if(user == null){
+            throw new Exception("No user with id ["+id+"] found");
+        }
+        if(user.checkPw(password)){
+            return user.generateToken();
+        }else {
+            throw new Exception("Invalid user password");
+        }
+    }
 
+    public static User identifyUser(String token) throws Exception {
+        Algorithm algorithm = Algorithm.HMAC256("82CQCZxcDw");
+        JWTVerifier verifier = JWT.require(algorithm).withIssuer("SnB").build();
+        DecodedJWT jwt = verifier.verify(token);
+        int id = jwt.getClaim("id").asInt();
+        User user = getUser(id).get(0);
+        if(user == null){
+            throw new Unidentified("user Unidnetified");
+        }
+        return user;
+    }
     //-------------------------------------------------------------------Getters/Setters::
 
     public int getId() {
@@ -111,5 +179,21 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Set<Playlist> getPlaylists() {
+        return playlists;
+    }
+
+    public void setPlaylists(Set<Playlist> playlists) {
+        this.playlists = playlists;
+    }
+
+    public Set<Room> getRooms() {
+        return rooms;
+    }
+
+    public void setRooms(Set<Room> rooms) {
+        this.rooms = rooms;
     }
 }

@@ -36,5 +36,7 @@
         <property name="hibernate.dbcp.maxWaitMillis">-1</property>
         <mapping class="edu.ciesla.main_service.database.models.User" />
         <mapping class="edu.ciesla.main_service.database.models.Song" />
+        <mapping class="edu.ciesla.main_service.database.models.Playlist" />
+        <mapping class="edu.ciesla.main_service.database.models.Room" />
     </session-factory>
 </hibernate-configuration>

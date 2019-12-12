@@ -8,6 +8,9 @@ import org.hibernate.query.NativeQuery;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "song", uniqueConstraints=@UniqueConstraint(columnNames = {"ID_song"}))
@@ -26,6 +29,11 @@ public class Song {
     @Column(name = "duration")
     int duration;
 
+    @OneToMany(mappedBy = "playing")
+    Set<Room> rooms = new HashSet<>();
+
+    @ManyToMany(mappedBy = "songs")
+    Set<Playlist>  usingPlaylists= new HashSet<>();
 
     //-------------------------------------------------------------------Overrides:
 
@@ -71,6 +79,22 @@ public class Song {
 
 
     //-------------------------------------------------------------------Getters/Setters::
+
+    public void setRooms(Set<Room> rooms) {
+        this.rooms = rooms;
+    }
+
+    public Set<Playlist> getUsingPlaylists() {
+        return usingPlaylists;
+    }
+
+    public void setUsingPlaylists(Set<Playlist> usingPlaylists) {
+        this.usingPlaylists = usingPlaylists;
+    }
+
+    public Set<Room> getRooms() {
+        return rooms;
+    }
 
     public String getId() {
         return id;
