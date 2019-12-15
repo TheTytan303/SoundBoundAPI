@@ -87,6 +87,9 @@ public class Playlist {
     public void setOwners(Set<User> owners) {
         this.owners = owners;
     }
+    public int getSongNumber(){
+        return this.songs.size();
+    }
 
     @Override
     public String toString() {
@@ -94,11 +97,14 @@ public class Playlist {
     }
 
     private class PlaylistShort{
-        int id;
-        String name;
+        public int id;
+        public String name;
         public PlaylistShort(int id, String name) {
             this.id = id;
             this.name = name;
+        }
+        public int getId(){
+            return id;
         }
     }
 }

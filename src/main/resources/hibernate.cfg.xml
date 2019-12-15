@@ -16,7 +16,7 @@
         <property name="connection.password">
             szkielet
         </property>
-        <property name="connection.pool_size">1</property>
+        <property name="connection.pool_size">100</property>
         <property name="dialect">
             org.hibernate.dialect.MySQL5Dialect
         </property>

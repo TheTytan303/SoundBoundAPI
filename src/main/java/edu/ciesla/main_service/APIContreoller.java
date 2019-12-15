@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -49,12 +50,12 @@ public class APIContreoller {
     }
 
     @RequestMapping(value ="/authorize", method =  RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> authorize(@RequestHeader String header){
-        JSONParser parser = new JSONParser(header);
+    public ResponseEntity<String> authorize(@RequestBody String body){
+        JSONParser parser = new JSONParser(body);
         try {
-            Map<String, String> headerContent = (Map<String, String>) parser.parse();
-            String id = headerContent.get("Username");
-            String password= headerContent.get("Password");
+            Map<String, String>bodyContent = (Map<String, String>) parser.parse();
+            String id = bodyContent.get("id");
+            String password= bodyContent.get("Password");
             String token = User.authorize(Integer.parseInt(id), password);
             return new ResponseEntity<>(token, HttpStatus.OK);
 
@@ -66,24 +67,25 @@ public class APIContreoller {
     }
 
     @RequestMapping(value ="/me/lists", method =  RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getUserLists(@RequestHeader String header){
-        JSONParser parser = new JSONParser(header);
+    public ResponseEntity<String> getUserLists(@RequestHeader String authorization){
         try {
-            Map<String, String> headerContent = (Map<String, String>) parser.parse();
-            String jwt = headerContent.get("authorization");
-            User user = User.identifyUser(jwt);
+            User user = User.identifyUser(authorization);
             JSONObject response = new JSONObject();
             JSONArray array = new JSONArray();
             for(Playlist pl: user.getPlaylists()){
-                array.put(pl.getPlaylistShort());
+                JSONObject tmp = new JSONObject();
+                tmp.put("id", pl.getId());
+                tmp.put("title",pl.getTitle());
+                tmp.put("songNumber",pl.getSongNumber());
+                array.put(tmp);
             }
-            response.put("",array);
+            response.put("playlists: ",array);
+            //response.put("Playlists: ",array.toList());
+            return new ResponseEntity<>(array.toString(), HttpStatus.OK);
         } catch (ParseException e) {
             return new ResponseEntity<>("could not read data - wrong JSON format", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
-        return null;
     }
 }
