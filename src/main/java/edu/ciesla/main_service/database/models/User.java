@@ -33,8 +33,7 @@ public class User {
     @Column(name = "password", nullable = true)
     String password;
 
-    @ManyToMany(cascade = { CascadeType.ALL })
-    @JoinTable(name="playlist_owners", joinColumns = @JoinColumn(name="user"), inverseJoinColumns = @JoinColumn(name = "Playlist"))
+    @ManyToMany(mappedBy = "owners")
     Set<Playlist> playlists= new HashSet<>();
 
     @ManyToMany(cascade = { CascadeType.ALL })
@@ -78,6 +77,9 @@ public class User {
     //-------------------------------------------------------------------STATIC:
     public static ArrayList<User> getUser(int ...ids){
         ArrayList<User> returnVale = new ArrayList<>();
+        if(ids.length == 0){
+            return returnVale;
+        }
         String sql = "SELECT * FROM `user`";
         if(ids.length>0){
             sql=sql.concat(" WHERE");
@@ -95,7 +97,6 @@ public class User {
     }
 
     public static User addUser(String nickname, String password) throws Exception {
-        //String sql = "INSERT INTO `user` (`ID_user`, `nickname`, `user_token`, `Password`) VALUES (NULL, "+nickname+", NULL, "+password+")";
         User returnVale = new User(nickname,password);
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tx;
@@ -121,6 +122,7 @@ public class User {
         query.addEntity(User.class);
         returnVale.addAll(query.list());
         transaction.commit();
+        session.close();
         return returnVale;
     }
 
@@ -136,7 +138,7 @@ public class User {
         }
     }
 
-    public static User identifyUser(String token) throws Exception {
+    public static User identifyUser(String token) throws Unidentified {
         Algorithm algorithm = Algorithm.HMAC256("82CQCZxcDw");
         JWTVerifier verifier = JWT.require(algorithm).withIssuer("SnB").build();
         DecodedJWT jwt = verifier.verify(token);

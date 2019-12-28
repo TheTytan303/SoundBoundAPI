@@ -1,10 +1,16 @@
 package edu.ciesla.main_service.database.models;
 
+import edu.ciesla.main_service.database.HibernateConfig;
+import edu.ciesla.main_service.database.models.exceptions.AlreadyInDatabase;
+import edu.ciesla.main_service.database.models.exceptions.Unidentified;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.NativeQuery;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "playlist", uniqueConstraints=@UniqueConstraint(columnNames = {"ID_Playlist"}))
@@ -18,11 +24,15 @@ public class Playlist {
     @Column(name = "title", nullable = false)
     String title;
 
-    @ManyToMany
+    @Column(name = "token", nullable = true)
+    Integer token;
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name="playlist_entry", joinColumns = @JoinColumn(name="Playlist"), inverseJoinColumns = @JoinColumn(name = "song"))
     List<Song> songs = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "playlists")
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name="playlist_owners", joinColumns = @JoinColumn(name = "Playlist"), inverseJoinColumns = @JoinColumn(name="user"))
     Set<User> owners= new HashSet<>();
 
     @OneToMany(mappedBy = "queue")
@@ -31,14 +41,147 @@ public class Playlist {
     @OneToMany(mappedBy = "history")
     Set<Room> roomsHistory = new HashSet<>();
 
-    public PlaylistShort getPlaylistShort(){
-        return new PlaylistShort(this.id,this.title);
-    }
 
+    //-------------------------------------------------------------------Public:
+    public JSONObject getPlaylistShortJSON(){
+        return new PlaylistShort(this.id,this.songs.size(),this.title).toJSON();
+    }
+    public void addSong(List<Song> songs){
+        this.songs.addAll(songs);
+        this.update();
+    }
+    public void deleteSong(int offset, int count){
+        for(int i =0; i<count;i++){
+            if(offset >= this.songs.size()) break;
+            this.songs.remove(offset);
+        }
+        this.update();
+    }
+    public JSONObject JSON(){
+        JSONObject returnVale = new JSONObject();
+        returnVale.put("id", this.id);
+        returnVale.put("title", this.title);
+        //TODO ograniczyć max liczbę piosenek
+        JSONArray tmp = new JSONArray();
+        for(Song s: this.songs){
+            tmp.put(s.id);
+        }
+        returnVale.put("songs", tmp);
+        //TODO ograniczyć max liczbę ownersow
+        tmp = new JSONArray();
+        for(User u: this.owners){
+            tmp.put(u.getNickname());
+        }
+        returnVale.put("owners", tmp);
+        return returnVale;
+    }
+    public Playlist() {
+    }
+    public boolean isOwner(User owner){
+        for(User u: this.getOwners()){
+            if(u.getId() == owner.getId()){
+                return true;
+            }
+        }
+        return false;
+    }
+    public int getOwnerToken(){
+        this.generateToken();
+        this.update();
+        return this.token;
+    }
+    public void addOwner(int token, User user) throws Unidentified, AlreadyInDatabase {
+        if(this. token == 0){
+            throw new Unidentified("owner token not generated");
+        }
+        if(this.token != token){
+            throw new Unidentified("invalid owner token");
+        }
+        this.token = 0;
+        if(this.isOwner(user)){
+            throw new AlreadyInDatabase("this User is already Owner of this Playlist");
+        }
+        this.owners.add(user);
+        this.update();
+    }
+    //-------------------------------------------------------------------Private:
+    private void generateToken(){
+        Random random = new Random(System.currentTimeMillis());
+        this.token = random.nextInt();
+        if(this.token < 0) this.token *= (-1);
+        this.token = this.token % 9000;
+        this.token += 1000;
+    }
+    private void update(){
+        Session session = HibernateConfig.getSessionFactory().openSession();
+        Transaction tc = session.beginTransaction();
+        session.update(this);
+        session.flush();
+        tc.commit();
+        session.close();
+    }
     //-------------------------------------------------------------------Overrides:
 
+    //-------------------------------------------------------------------Static:
+    public static Playlist addPlaylist(String title, User owner, Song ...songs){
+        Playlist returnVale = new Playlist();
+        returnVale.title = title;
+        returnVale.owners.add(owner);
+        returnVale.songs.addAll(Set.of(songs));
+        Session session = HibernateConfig.getSessionFactory().openSession();
+        Transaction tx;
+        try{
+            tx = session.beginTransaction();
+            session.save(returnVale);
+            tx.commit();
+        }catch (PersistenceException pe){
+            pe.printStackTrace();
+        }finally {
+            session.close();
+        }
+        return returnVale;
+    }
 
-    public Playlist() {}
+
+    public static List<Playlist> getPlaylist(int ...ids){
+        ArrayList<Playlist> returnVale = new ArrayList<>();
+        String sql = "SELECT * FROM `playlist`";
+        if(ids.length>0){
+            sql=sql.concat(" WHERE");
+            for (int value : ids) {
+                sql = sql.concat(" `ID_Playlist` =" + value + " OR");
+            }
+            sql = sql.substring(0, sql.length() - 3);
+        }
+        try{
+            returnVale = getCommand(sql);
+        }catch (Exception e){
+            return returnVale;
+        }
+        return returnVale;
+    }
+
+    private static ArrayList<Playlist> getCommand(String sqlCommand){
+        ArrayList<Playlist> returnVale = new ArrayList<>();
+        Session session = HibernateConfig.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+        NativeQuery query = session.createNativeQuery(sqlCommand);
+        query.addEntity(Playlist.class);
+        returnVale.addAll(query.list());
+        transaction.commit();
+        session.close();
+        return returnVale;
+    }
+    //-------------------------------------------------------------------Getters/Setters:
+
+
+    public int getToken() {
+        return token;
+    }
+
+    public void setToken(int token) {
+        this.token = token;
+    }
 
     public int getId() {
         return id;
@@ -97,14 +240,23 @@ public class Playlist {
     }
 
     private class PlaylistShort{
-        public int id;
+        public int id, songCount;
         public String name;
-        public PlaylistShort(int id, String name) {
+        public PlaylistShort(int id, int soungCount, String name) {
             this.id = id;
+            this.songCount = soungCount;
             this.name = name;
         }
         public int getId(){
             return id;
+        }
+        public JSONObject toJSON(){
+            JSONObject returnVale = new JSONObject();
+            returnVale.put("id" , this.id);
+            returnVale.put("songNumber" , this.songCount);
+            returnVale.put("title" , this.name);
+
+            return returnVale;
         }
     }
 }

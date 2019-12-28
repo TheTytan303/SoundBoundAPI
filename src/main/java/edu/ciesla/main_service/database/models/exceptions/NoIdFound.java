@@ -1,7 +1,7 @@
 package edu.ciesla.main_service.database.models.exceptions;
 
-public class Unidentified extends Exception {
-    public Unidentified(String message){
+public class NoIdFound extends Exception{
+    public NoIdFound(String message){
         super(message);
     }
 }
