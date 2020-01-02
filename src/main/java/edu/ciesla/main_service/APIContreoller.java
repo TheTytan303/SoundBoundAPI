@@ -5,10 +5,7 @@ import edu.ciesla.main_service.database.models.Playlist;
 import edu.ciesla.main_service.database.models.Room;
 import edu.ciesla.main_service.database.models.Song;
 import edu.ciesla.main_service.database.models.User;
-import edu.ciesla.main_service.database.models.exceptions.AlreadyInDatabase;
-import edu.ciesla.main_service.database.models.exceptions.NoIdFound;
-import edu.ciesla.main_service.database.models.exceptions.Unauthorized;
-import edu.ciesla.main_service.database.models.exceptions.Unidentified;
+import edu.ciesla.main_service.database.models.exceptions.*;
 import org.apache.tomcat.util.json.JSONParser;
 import org.apache.tomcat.util.json.ParseException;
 import org.json.JSONArray;
@@ -38,20 +35,16 @@ public class APIContreoller {
             if(bodyContent.size() != 2){
                 return new ResponseEntity<>("Incorrect number of arguments", HttpStatus.BAD_REQUEST);
             }
-            //System.out.println(bodyContent.get("nickname"));
             User user = User.addUser(bodyContent.get("nickname"),bodyContent.get("password"));
             JSONObject response = new JSONObject();
             response.put("user_name", user.getNickname());
-
             response.put("id", user.getId());
             response.put("token", user.getToken());
-            return new ResponseEntity<>(response.toString(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(response.toString(), HttpStatus.valueOf(200));
         } catch (ParseException e) {
-            System.err.println(e.getMessage());
             return new ResponseEntity<>("could not read data - wrong JSON format", HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (WrongInputData wrongInputData) {
+            return new ResponseEntity<>(wrongInputData.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -67,8 +60,10 @@ public class APIContreoller {
 
         } catch (ParseException e) {
             return new ResponseEntity<>("could not read data - wrong JSON format", HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        } catch (Unauthorized unauthorized) {
+            return new ResponseEntity<>(unauthorized.getMessage(), HttpStatus.UNAUTHORIZED);
+        } catch (NoIdFound | NumberFormatException noIdFound) {
+            return new ResponseEntity<>(noIdFound.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 
@@ -87,8 +82,8 @@ public class APIContreoller {
             //response.put("playlists: ",array);
             //response.put("Playlists: ",array.toList());
             return new ResponseEntity<>(array.toString(), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Unidentified unidentified) {
+            return new ResponseEntity<>(unidentified.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -105,15 +100,12 @@ public class APIContreoller {
             String artist = bodyContent.get("artist");
             int duration = Integer.parseInt(bodyContent.get("duration"));
             posted = Song.addSong(id,title,artist,duration);
-        } catch (ParseException e) {
-            System.err.println(e.getMessage());
+        } catch (ParseException | NumberFormatException e) {
             return new ResponseEntity<>("could not read data - wrong JSON format", HttpStatus.BAD_REQUEST);
-        }catch (NoIdFound e){
-            System.err.println(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.valueOf(400));
-
-        } catch (AlreadyInDatabase alreadyInDatabase) {
+        }catch (AlreadyInDatabase alreadyInDatabase) {
             return new ResponseEntity<>("Song with specified ID exists in DataBase", HttpStatus.valueOf(409));
+        } catch (WrongInputData wrongInputData) {
+            return new ResponseEntity<>(wrongInputData.getMessage(), HttpStatus.valueOf(400));
         }
         JSONObject retrunVale = new JSONObject();
         retrunVale.put("id", posted.getId());

@@ -4,6 +4,7 @@ package edu.ciesla.main_service.database.models;
 import edu.ciesla.main_service.database.HibernateConfig;
 import edu.ciesla.main_service.database.models.exceptions.AlreadyInDatabase;
 import edu.ciesla.main_service.database.models.exceptions.NoIdFound;
+import edu.ciesla.main_service.database.models.exceptions.WrongInputData;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
@@ -52,14 +53,20 @@ public class Song {
 
     //-------------------------------------------------------------------STATIC:
 
-    public static Song addSong(String id, String title, String artist, int duration) throws NoIdFound, AlreadyInDatabase {
+    public static Song addSong(String id, String title, String artist, Integer duration) throws AlreadyInDatabase, WrongInputData {
         Song returnVale = new Song();
         returnVale.artist = artist;
         returnVale.id = id;
         returnVale.duration = duration;
         returnVale.title=title;
-        if(id == null || id == ""){
-            throw new NoIdFound("None song ID has been defined");
+        if(id == null || id == "" || id == "null"){
+            throw new WrongInputData("None song ID has been defined");
+        }
+        if(title == null || title == ""){
+            throw new WrongInputData("None song Title has been defined");
+        }
+        if(duration == null || duration <=0){
+            throw new WrongInputData("None song Duration has been defined or is less than '1'");
         }
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tx;

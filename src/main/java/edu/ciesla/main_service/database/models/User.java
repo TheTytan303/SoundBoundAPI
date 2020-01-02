@@ -5,7 +5,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import edu.ciesla.main_service.database.HibernateConfig;
+import edu.ciesla.main_service.database.models.exceptions.NoIdFound;
+import edu.ciesla.main_service.database.models.exceptions.Unauthorized;
 import edu.ciesla.main_service.database.models.exceptions.Unidentified;
+import edu.ciesla.main_service.database.models.exceptions.WrongInputData;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
@@ -95,21 +98,17 @@ public class User {
         return returnVale;
     }
 
-    public static User addUser(String nickname, String password) throws Exception {
+    public static User addUser(String nickname, String password) throws WrongInputData {
+        if(password == null || nickname == null){
+            throw new WrongInputData("no required data found");
+        }
         User returnVale = new User(nickname,password);
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tx;
-        Exception exception=null;
-        try {
-            tx = session.beginTransaction();
-            session.save(returnVale);
-            tx.commit();
-        }catch (Exception e){
-            exception = e;
-        }finally {
-            session.close();
-        }
-        if(exception != null) throw exception;
+        tx = session.beginTransaction();
+        session.save(returnVale);
+        tx.commit();
+        //if(exception != null) throw exception;
         return returnVale;
     }
 
@@ -125,15 +124,15 @@ public class User {
         return returnVale;
     }
 
-    public static String authorize(int id, String password) throws Exception {
+    public static String authorize(int id, String password) throws NoIdFound, Unauthorized {
         User user = getUser(id).get(0);
         if(user == null){
-            throw new Exception("No user with id ["+id+"] found");
+            throw new NoIdFound("No user with id ["+id+"] found");
         }
         if(user.checkPw(password)){
             return user.generateToken();
         }else {
-            throw new Exception("Invalid user password");
+            throw new Unauthorized("Invalid user password");
         }
     }
 
