@@ -38,5 +38,7 @@
         <mapping class="edu.ciesla.main_service.database.models.Song" />
         <mapping class="edu.ciesla.main_service.database.models.Playlist" />
         <mapping class="edu.ciesla.main_service.database.models.Room" />
+        <mapping class="edu.ciesla.main_service.database.models.Room_owner" />
+        <mapping class="edu.ciesla.main_service.database.models.PlaylistEntry" />
     </session-factory>
 </hibernate-configuration>

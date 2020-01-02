@@ -33,11 +33,10 @@ public class User {
     @Column(name = "password", nullable = true)
     String password;
 
-    @ManyToMany(mappedBy = "owners")
+    @ManyToMany(mappedBy = "owners", fetch = FetchType.LAZY)
     Set<Playlist> playlists= new HashSet<>();
 
-    @ManyToMany(cascade = { CascadeType.ALL })
-    @JoinTable(name="room_owners", joinColumns = @JoinColumn(name="user"), inverseJoinColumns = @JoinColumn(name = "room"))
+    @ManyToMany(mappedBy = "owners")
     Set<Room> rooms = new HashSet<>();
 
     public User(){}

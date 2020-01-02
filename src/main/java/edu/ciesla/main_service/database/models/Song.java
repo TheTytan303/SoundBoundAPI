@@ -32,8 +32,8 @@ public class Song {
     @OneToMany(mappedBy = "playing")
     Set<Room> rooms = new HashSet<>();
 
-    @ManyToMany(mappedBy = "songs")
-    Set<Playlist>  usingPlaylists= new HashSet<>();
+    @OneToMany(mappedBy = "song")
+    Set<PlaylistEntry>  usingPlaylists= new HashSet<>();
 
     public JSONObject JSON(){
         JSONObject retrunVale = new JSONObject();
@@ -47,7 +47,7 @@ public class Song {
 
     @Override
     public String toString() {
-        return "["+duration+"]"+"'"+title+"' by "+artist;
+        return "["+id+"]"+"'"+title+"' -|- "+artist;
     }
 
     //-------------------------------------------------------------------STATIC:
@@ -122,10 +122,13 @@ public class Song {
     public void setRooms(Set<Room> rooms) {
         this.rooms = rooms;
     }
-    public Set<Playlist> getUsingPlaylists() {
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
+    public Set<PlaylistEntry> getUsingPlaylists() {
         return usingPlaylists;
     }
-    public void setUsingPlaylists(Set<Playlist> usingPlaylists) {
+    public void setUsingPlaylists(Set<PlaylistEntry> usingPlaylists) {
         this.usingPlaylists = usingPlaylists;
     }
     public Set<Room> getRooms() {

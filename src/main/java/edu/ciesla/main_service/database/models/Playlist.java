@@ -27,9 +27,10 @@ public class Playlist {
     @Column(name = "token", nullable = true)
     Integer token;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name="playlist_entry", joinColumns = @JoinColumn(name="Playlist"), inverseJoinColumns = @JoinColumn(name = "song"))
-    List<Song> songs = new ArrayList<>();
+    @OneToMany(mappedBy = "playlist", fetch = FetchType.EAGER)
+    @OrderBy("position ASC")
+    //@JoinTable(name="playlist_entry", joinColumns = @JoinColumn(name="Playlist"), inverseJoinColumns = @JoinColumn(name = "song"))
+    List<PlaylistEntry> entries= new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name="playlist_owners", joinColumns = @JoinColumn(name = "Playlist"), inverseJoinColumns = @JoinColumn(name="user"))
@@ -41,21 +42,12 @@ public class Playlist {
     @OneToMany(mappedBy = "history")
     Set<Room> roomsHistory = new HashSet<>();
 
-
+    //-------------------------------------------------------------------Constructors:
+    public Playlist() {
+    }
     //-------------------------------------------------------------------Public:
     public JSONObject getPlaylistShortJSON(){
-        return new PlaylistShort(this.id,this.songs.size(),this.title).toJSON();
-    }
-    public void addSong(List<Song> songs){
-        this.songs.addAll(songs);
-        this.update();
-    }
-    public void deleteSong(int offset, int count){
-        for(int i =0; i<count;i++){
-            if(offset >= this.songs.size()) break;
-            this.songs.remove(offset);
-        }
-        this.update();
+        return new PlaylistShort(this.id,this.entries.size(),this.title).toJSON();
     }
     public JSONObject JSON(){
         JSONObject returnVale = new JSONObject();
@@ -63,8 +55,8 @@ public class Playlist {
         returnVale.put("title", this.title);
         //TODO ograniczyć max liczbę piosenek
         JSONArray tmp = new JSONArray();
-        for(Song s: this.songs){
-            tmp.put(s.id);
+        for(PlaylistEntry pe: this.entries){
+            tmp.put(pe.song.id);
         }
         returnVale.put("songs", tmp);
         //TODO ograniczyć max liczbę ownersow
@@ -75,20 +67,46 @@ public class Playlist {
         returnVale.put("owners", tmp);
         return returnVale;
     }
-    public Playlist() {
+    public void addSong(List<Song> songs){
+        double position = this.entries.size();
+        List<PlaylistEntry> entries = new ArrayList<>();
+        PlaylistEntry.addPlaylistEntriesAtEnd(this, position, songs);
+        this.entries.addAll(entries);
+        //this.update();
     }
-    public boolean isOwner(User owner){
-        for(User u: this.getOwners()){
-            if(u.getId() == owner.getId()){
-                return true;
+    public void addSong(List<Song> songs, int offset){
+        if(offset<0){
+            if(this.entries.size() == 0){
+                PlaylistEntry.addPlaylistEntriesAtEnd(this, this.entries.size(),songs);
+            }else{
+                PlaylistEntry.addPlaylistEntriesAtBeginning(this, this.entries.get(0).getPosition(),songs);
             }
+            return;
         }
-        return false;
+        if(offset-1 >= this.entries.size()){
+            PlaylistEntry.addPlaylistEntriesAtEnd(this, this.entries.size(),songs);
+        }else{
+            double position1 = this.entries.get(offset).position;
+            double position2 = this.entries.get(offset+1).position;
+            PlaylistEntry.addPlaylistEntries(this,position1,position2 ,songs);
+        }
+
     }
-    public int getOwnerToken(){
-        this.generateToken();
-        this.update();
-        return this.token;
+    public void deleteSong(int offset, int count){
+        //TODO delete offset song
+        Session session = HibernateConfig.getSessionFactory().openSession();
+        Transaction tx = session.beginTransaction();
+        for(int i = offset; i<count+offset && i<entries.size(); i++){
+            session.remove(entries.get(i));
+        }
+        session.flush();
+        tx.commit();
+        session.close();
+        //for(int i =0; i<count;i++){
+        //    if(offset >= this.songs.size()) break;
+        //    this.songs.remove(offset);
+        //}
+        //this.update();
     }
     public void addOwner(int token, User user) throws Unidentified, AlreadyInDatabase {
         if(this. token == 0){
@@ -103,6 +121,25 @@ public class Playlist {
         }
         this.owners.add(user);
         this.update();
+    }
+    public boolean isOwner(User owner){
+        for(User u: this.getOwners()){
+            if(u.getId() == owner.getId()){
+                return true;
+            }
+        }
+        return false;
+    }
+    public int getOwnerToken(){
+        this.generateToken();
+        this.update();
+        return this.token;
+    }
+    public Song getAndRemove(int index){
+        //TODO delete offset song
+        Song returnVale = this.entries.remove(0).getSong();
+        this.update();
+        return returnVale;
     }
     //-------------------------------------------------------------------Private:
     private void generateToken(){
@@ -122,12 +159,20 @@ public class Playlist {
     }
     //-------------------------------------------------------------------Overrides:
 
+    @Override
+    public String toString() {
+        return "["+id+"]"+title;
+    }
     //-------------------------------------------------------------------Static:
     public static Playlist addPlaylist(String title, User owner, Song ...songs){
         Playlist returnVale = new Playlist();
         returnVale.title = title;
         returnVale.owners.add(owner);
-        returnVale.songs.addAll(Set.of(songs));
+        List<PlaylistEntry> entries = new ArrayList<>();
+        for(Song s: songs){
+
+        }
+        //returnVale.songs.addAll(Set.of(songs));
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tx;
         try{
@@ -172,8 +217,17 @@ public class Playlist {
         session.close();
         return returnVale;
     }
-    //-------------------------------------------------------------------Getters/Setters:
 
+
+
+
+
+
+
+
+
+
+    //-------------------------------------------------------------------Getters/Setters:
 
     public int getToken() {
         return token;
@@ -215,12 +269,24 @@ public class Playlist {
         this.title = title;
     }
 
-    public List<Song> getSongs() {
-        return songs;
+    public void setToken(Integer token) {
+        this.token = token;
     }
 
-    public void setSongs(List<Song> songs) {
-        this.songs = songs;
+    public List<PlaylistEntry> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<PlaylistEntry> entries) {
+        this.entries = entries;
+    }
+
+    public List<Song> getSongs() {
+        List<Song> songs = new ArrayList<>();
+        for(PlaylistEntry pe: entries){
+            songs.add(pe.getSong());
+        }
+        return songs;
     }
 
     public Set<User> getOwners() {
@@ -231,14 +297,8 @@ public class Playlist {
         this.owners = owners;
     }
     public int getSongNumber(){
-        return this.songs.size();
+        return this.entries.size();
     }
-
-    @Override
-    public String toString() {
-        return "["+id+"]"+title;
-    }
-
     private class PlaylistShort{
         public int id, songCount;
         public String name;
