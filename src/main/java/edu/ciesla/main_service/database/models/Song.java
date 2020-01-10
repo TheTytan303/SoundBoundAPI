@@ -36,6 +36,16 @@ public class Song {
     @OneToMany(mappedBy = "song")
     Set<PlaylistEntry>  usingPlaylists= new HashSet<>();
 
+
+    public Song(){};
+
+    public Song(String id, String title, String artist, Integer duration) {
+        this.id = id;
+        this.title = title;
+        this.artist = artist;
+        this.duration = duration;
+    }
+
     public JSONObject JSON(){
         JSONObject retrunVale = new JSONObject();
         retrunVale.put("id", this.getId());

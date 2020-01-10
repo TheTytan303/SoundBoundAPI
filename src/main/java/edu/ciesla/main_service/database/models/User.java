@@ -3,6 +3,7 @@ package edu.ciesla.main_service.database.models;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import edu.ciesla.main_service.database.HibernateConfig;
 import edu.ciesla.main_service.database.models.exceptions.NoIdFound;
@@ -49,7 +50,7 @@ public class User {
     }
 
 
-    public boolean checkPw(String password){
+    public boolean checkPw(String password)throws JWTDecodeException {
         return BCrypt.checkpw(password,this.password);
     }
     public String generateToken(){
@@ -129,14 +130,18 @@ public class User {
         if(user == null){
             throw new NoIdFound("No user with id ["+id+"] found");
         }
-        if(user.checkPw(password)){
-            return user.generateToken();
-        }else {
-            throw new Unauthorized("Invalid user password");
+        try{
+            if(user.checkPw(password)){
+                return user.generateToken();
+            }else {
+                throw new Unauthorized("Invalid user password");
+            }
+        } catch(JWTDecodeException e){
+            throw new Unauthorized("Invalid JWT");
         }
     }
 
-    public static User identifyUser(String token) throws Unidentified {
+    public static User identifyUser(String token) throws Unidentified, JWTDecodeException {
         Algorithm algorithm = Algorithm.HMAC256("82CQCZxcDw");
         JWTVerifier verifier = JWT.require(algorithm).withIssuer("SnB").build();
         DecodedJWT jwt = verifier.verify(token);

@@ -75,7 +75,7 @@ public class Playlist {
         //this.update();
     }
     public void addSong(List<Song> songs, int offset){
-        if(offset<0){
+        if(offset<=0){
             if(this.entries.size() == 0){
                 PlaylistEntry.addPlaylistEntriesAtEnd(this, this.entries.size(),songs);
             }else{
@@ -83,11 +83,11 @@ public class Playlist {
             }
             return;
         }
-        if(offset-1 >= this.entries.size()){
+        if(offset >= this.entries.size()){
             PlaylistEntry.addPlaylistEntriesAtEnd(this, this.entries.size(),songs);
         }else{
-            double position1 = this.entries.get(offset).position;
-            double position2 = this.entries.get(offset+1).position;
+            double position1 = this.entries.get(offset-1).position;
+            double position2 = this.entries.get(offset).position;
             PlaylistEntry.addPlaylistEntries(this,position1,position2 ,songs);
         }
 
@@ -158,7 +158,6 @@ public class Playlist {
         session.close();
     }
     //-------------------------------------------------------------------Overrides:
-
     @Override
     public String toString() {
         return "["+id+"]"+title;
@@ -169,9 +168,7 @@ public class Playlist {
         returnVale.title = title;
         returnVale.owners.add(owner);
         List<PlaylistEntry> entries = new ArrayList<>();
-        for(Song s: songs){
-
-        }
+        double position = returnVale.entries.size();
         //returnVale.songs.addAll(Set.of(songs));
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tx;
@@ -184,10 +181,12 @@ public class Playlist {
         }finally {
             session.close();
         }
+        List<Song> songList = new ArrayList<>();
+        songList.addAll(Arrays.asList(songs));
+        PlaylistEntry.addPlaylistEntriesAtEnd(returnVale, position, songList);
+        returnVale.entries.addAll(entries);
         return returnVale;
     }
-
-
     public static List<Playlist> getPlaylist(int ...ids){
         ArrayList<Playlist> returnVale = new ArrayList<>();
         String sql = "SELECT * FROM `playlist`";
@@ -205,7 +204,6 @@ public class Playlist {
         }
         return returnVale;
     }
-
     private static ArrayList<Playlist> getCommand(String sqlCommand){
         ArrayList<Playlist> returnVale = new ArrayList<>();
         Session session = HibernateConfig.getSessionFactory().openSession();
@@ -218,17 +216,7 @@ public class Playlist {
         return returnVale;
     }
 
-
-
-
-
-
-
-
-
-
     //-------------------------------------------------------------------Getters/Setters:
-
     public int getToken() {
         return token;
     }

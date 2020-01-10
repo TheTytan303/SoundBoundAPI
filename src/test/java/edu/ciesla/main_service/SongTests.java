@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -14,8 +15,9 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 public class SongTests {
-    APIContreoller testUnit = MainServiceApplicationTests.testUnit;
+    static APIContreoller testUnit = MainServiceApplicationTests.testUnit;
     static Song testSong;
     @BeforeAll
     static void initialize(){
@@ -44,7 +46,7 @@ public class SongTests {
         responseSong.setTitle((String)response.get("title"));
         responseSong.setArtist((String)response.get("artist"));
         responseSong.setId((String)response.get("id"));
-        ifEqualsSong(testSong, responseSong);
+        assertTrue(ifEqualsSong(testSong, responseSong));
         getSong();
     }
     void getSong(){
@@ -55,7 +57,7 @@ public class SongTests {
         responseSong.setTitle((String)response.get("title"));
         responseSong.setArtist((String)response.get("artist"));
         responseSong.setId((String)response.get("id"));
-       ifEqualsSong(testSong, responseSong);
+        assertTrue(ifEqualsSong(testSong, responseSong));
     }
 
     @Test
@@ -117,10 +119,39 @@ public class SongTests {
         assertEquals(400, responseEntity.getStatusCodeValue());
     }
 
-    public static void ifEqualsSong(Song s1, Song s2){
-        assertEquals(s1.getId(),s2.getId());
-        assertEquals(s1.getArtist(),s2.getArtist());
-        assertEquals(s1.getDuration(),s2.getDuration());
-        assertEquals(s1.getTitle(),s2.getTitle());
+    public static boolean ifEqualsSong(Song s1, Song s2){
+        if(!s1.getId().equals(s2.getId())){
+            return false;
+        }
+        if(!s1.getArtist().equals(s2.getArtist())){
+            return false;
+        }
+        if(s1.getDuration() != s2.getDuration()){
+            return false;
+        }
+        if(!s1.getTitle().equals(s2.getTitle())){
+            return false;
+        }return true;
+    }
+    public static void createSong(Song song){
+        String body =
+                "{\n" +
+                        "  \"id\": \""+      song.getId()+"\",\n" +
+                        "  \"title\": \""+   song.getTitle()+"\",\n" +
+                        "  \"artist\": \""+  song.getArtist()+"\",\n" +
+                        "  \"duration\": \""+song.getDuration()+"\"\n" +
+                        "}";
+        ResponseEntity<String> responseEntity = testUnit.postSong(body);
+        if(responseEntity.getStatusCodeValue() != 200){
+            System.err.println(responseEntity.getBody());
+        }
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        Map<String, Object> response = MainServiceApplicationTests.deJSON(responseEntity);
+        Song responseSong = new Song();
+        responseSong.setDuration(((BigInteger)response.get("duration")).intValue());
+        responseSong.setTitle((String)response.get("title"));
+        responseSong.setArtist((String)response.get("artist"));
+        responseSong.setId((String)response.get("id"));
+        assertTrue(ifEqualsSong(song, responseSong));
     }
 }

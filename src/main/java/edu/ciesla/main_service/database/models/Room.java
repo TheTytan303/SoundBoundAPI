@@ -19,7 +19,7 @@ public class Room {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name = "ID_room", nullable = false, unique = true)
-    String id;
+    Integer id;
 
     @Column(name = "name", nullable = false)
     String name;
@@ -206,11 +206,13 @@ public class Room {
     }
 
 
+    public User getHost() {
+        return host;
+    }
 
-
-
-
-
+    public void setHost(User host) {
+        this.host = host;
+    }
 
     public Set<User> getOwners() {
         return owners;
@@ -244,11 +246,11 @@ public class Room {
         this.history = history;
     }
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

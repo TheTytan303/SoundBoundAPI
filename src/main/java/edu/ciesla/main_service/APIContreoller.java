@@ -1,6 +1,7 @@
 package edu.ciesla.main_service;
 
 
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import edu.ciesla.main_service.database.models.Playlist;
 import edu.ciesla.main_service.database.models.Room;
 import edu.ciesla.main_service.database.models.Song;
@@ -254,7 +255,7 @@ public class APIContreoller {
             owner = User.identifyUser(authorization);
         }catch (NumberFormatException | NoIdFound e){
             return new ResponseEntity<>("Object targeted by ID has not been found", HttpStatus.NOT_FOUND);
-        }catch (Unidentified e){
+        }catch (Unidentified | JWTDecodeException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.valueOf(401));
         }
         if(!target.isOwner(owner)){
@@ -277,7 +278,7 @@ public class APIContreoller {
             JSONObject returnVale = new JSONObject();
             returnVale.put("owner_token", target.getOwnerToken());
             return new ResponseEntity<>(returnVale.toString(),HttpStatus.valueOf(200));
-        } catch (Unidentified unidentified) {
+        } catch (Unidentified | JWTDecodeException unidentified) {
             return new ResponseEntity<>(unidentified.getMessage(), HttpStatus.valueOf(401));
         }catch (NumberFormatException | NoIdFound e){
             return new ResponseEntity<>("Object targeted by ID has not been found", HttpStatus.NOT_FOUND);
@@ -289,7 +290,8 @@ public class APIContreoller {
                                               @RequestBody String body){
         JSONParser parser = new JSONParser(body);
         try {
-            User user = User.identifyUser(authorization);List<Playlist> list = Playlist.getPlaylist(Integer.parseInt(id));
+            User user = User.identifyUser(authorization);
+            List<Playlist> list = Playlist.getPlaylist(Integer.parseInt(id));
             if(list.size()!= 1){
                 throw new NoIdFound("Object targeted by ID has not been found");
             }
@@ -299,7 +301,7 @@ public class APIContreoller {
             try{
                 BigInteger s =(BigInteger) bodyContent.get("owner_token");
                 token = s.intValue();
-            }catch (Exception e){
+            }catch (ClassCastException e){
                 return new ResponseEntity<>("could not Owner Token - wrong JSON format, or passed Owner Token is not a number", HttpStatus.BAD_REQUEST);
             }
             target.addOwner(token, user);
@@ -309,7 +311,7 @@ public class APIContreoller {
         }catch (NoIdFound e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }catch(NumberFormatException e){
-            return new ResponseEntity<>("Playlist ID must not a number", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Playlist ID must be a number", HttpStatus.NOT_FOUND);
         }catch (ParseException e) {
             return new ResponseEntity<>("could not read data - wrong JSON format", HttpStatus.BAD_REQUEST);
         } catch (AlreadyInDatabase e) {
