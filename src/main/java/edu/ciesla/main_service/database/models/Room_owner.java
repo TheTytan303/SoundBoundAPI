@@ -22,7 +22,7 @@ public class Room_owner{
     @JoinColumn(name = "song", nullable = true)
     Song song;
 
-    public void update(){
+    void update(){
         Session session = HibernateConfig.getSessionFactory().openSession();
         Transaction tc = session.beginTransaction();
         session.update(this);
@@ -32,35 +32,21 @@ public class Room_owner{
     }
 
     public Room_owner(){};
-
     public int getId() {
         return id;
     }
-
     public void setId(int id) {
         this.id = id;
     }
-
     public User getUser() {
         return user;
     }
-
     public void setUser(User user) {
         this.user = user;
     }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
     public Song getSong() {
         return song;
     }
-
     public void setSong(Song song) {
         this.song = song;
     }

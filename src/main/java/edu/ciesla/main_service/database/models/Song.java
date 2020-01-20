@@ -22,13 +22,13 @@ public class Song {
     String id;
 
     @Column(name = "title", nullable = false)
-    String title;
+    private String title;
 
     @Column(name = "artist")
-    String artist;
+    private String artist;
 
     @Column(name = "duration")
-    Integer duration;
+    private Integer duration;
 
     @OneToMany(mappedBy = "playing")
     Set<Room> rooms = new HashSet<>();
@@ -136,21 +136,6 @@ public class Song {
     }
     //-------------------------------------------------------------------Getters/Setters::
 
-    public void setRooms(Set<Room> rooms) {
-        this.rooms = rooms;
-    }
-    public void setDuration(Integer duration) {
-        this.duration = duration;
-    }
-    public Set<PlaylistEntry> getUsingPlaylists() {
-        return usingPlaylists;
-    }
-    public void setUsingPlaylists(Set<PlaylistEntry> usingPlaylists) {
-        this.usingPlaylists = usingPlaylists;
-    }
-    public Set<Room> getRooms() {
-        return rooms;
-    }
     public String getId() {
         return id;
     }

@@ -30,12 +30,12 @@ public class User {
     @Column(name = "nickname", nullable = false)
     String nickname;
 
-    @Column(name = "user_token", nullable = true)
+    @Column(name = "user_token")
     @GeneratedValue()
     String user_token;
 
-    @Column(name = "password", nullable = true)
-    String password;
+    @Column(name = "password")
+    private String password;
 
     @ManyToMany(mappedBy = "owners", fetch = FetchType.LAZY)
     Set<Playlist> playlists= new HashSet<>();
@@ -50,10 +50,10 @@ public class User {
     }
 
 
-    public boolean checkPw(String password)throws JWTDecodeException {
+    private boolean checkPw(String password)throws JWTDecodeException {
         return BCrypt.checkpw(password,this.password);
     }
-    public String generateToken(){
+    private String generateToken(){
         Algorithm algoritmHS = Algorithm.HMAC256("82CQCZxcDw");
         Map<String, Object> map = new HashMap<>();
         map.put("alg", "HMAC256");
@@ -157,17 +157,15 @@ public class User {
     public int getId() {
         return id;
     }
-
+    public Set<Playlist> getPlaylists(){
+        return this.playlists;
+    }
     public void setId(int id) {
         this.id = id;
     }
 
     public String getNickname() {
         return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
     }
 
     public String getUser_token() {
@@ -180,25 +178,5 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Set<Playlist> getPlaylists() {
-        return playlists;
-    }
-
-    public void setPlaylists(Set<Playlist> playlists) {
-        this.playlists = playlists;
-    }
-
-    public Set<Room> getRooms() {
-        return rooms;
-    }
-
-    public void setRooms(Set<Room> rooms) {
-        this.rooms = rooms;
     }
 }

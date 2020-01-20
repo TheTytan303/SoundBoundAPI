@@ -10,7 +10,6 @@ import org.hibernate.query.NativeQuery;
 import org.json.JSONObject;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 @Entity
@@ -22,25 +21,25 @@ public class Room {
     Integer id;
 
     @Column(name = "name", nullable = false)
-    String name;
+    private String name;
 
-    @Column(name = "token", nullable = true)
-    Integer token;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "Host", nullable = true)
-    User host;
+    @Column(name = "token")
+    private Integer token;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "playing", nullable = true)
+    @JoinColumn(name = "Host")
+    private User host;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "playing")
     Song playing;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "Queue", nullable = true)
+    @JoinColumn(name = "Queue")
     Playlist queue;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "History", nullable = true)
+    @JoinColumn(name = "History")
     Playlist history;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -204,68 +203,30 @@ public class Room {
         session.close();
         return returnVale;
     }
-
-
-    public User getHost() {
-        return host;
-    }
-
-    public void setHost(User host) {
-        this.host = host;
-    }
-
     public Set<User> getOwners() {
         return owners;
     }
-
-    public void setOwners(Set<User> owners) {
-        this.owners = owners;
-    }
-
-    public Integer getToken() {
-        return token;
-    }
-
-    public void setToken(Integer token) {
-        this.token = token;
-    }
-
     public Playlist getQueue() {
         return queue;
     }
-
-    public void setQueue(Playlist queue) {
-        this.queue = queue;
-    }
-
     public Playlist getHistory() {
         return history;
     }
-
-    public void setHistory(Playlist history) {
-        this.history = history;
-    }
-
     public Integer getId() {
         return id;
     }
-
     public void setId(Integer id) {
         this.id = id;
     }
-
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
-
     public Song getPlaying() {
         return playing;
     }
-
     public void setPlaying(Song playing) {
         this.playing = playing;
     }

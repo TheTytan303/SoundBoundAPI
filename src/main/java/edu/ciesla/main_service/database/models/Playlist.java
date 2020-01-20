@@ -22,15 +22,15 @@ public class Playlist {
     int id;
 
     @Column(name = "title", nullable = false)
-    String title;
+    private String title;
 
-    @Column(name = "token", nullable = true)
-    Integer token;
+    @Column(name = "token")
+    private Integer token;
 
     @OneToMany(mappedBy = "playlist", fetch = FetchType.EAGER)
     @OrderBy("position ASC")
     //@JoinTable(name="playlist_entry", joinColumns = @JoinColumn(name="Playlist"), inverseJoinColumns = @JoinColumn(name = "song"))
-    List<PlaylistEntry> entries= new ArrayList<>();
+    private List<PlaylistEntry> entries= new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name="playlist_owners", joinColumns = @JoinColumn(name = "Playlist"), inverseJoinColumns = @JoinColumn(name="user"))
@@ -123,7 +123,7 @@ public class Playlist {
         this.update();
     }
     public boolean isOwner(User owner){
-        for(User u: this.getOwners()){
+        for(User u: owners){
             if(u.getId() == owner.getId()){
                 return true;
             }
@@ -217,14 +217,6 @@ public class Playlist {
     }
 
     //-------------------------------------------------------------------Getters/Setters:
-    public int getToken() {
-        return token;
-    }
-
-    public void setToken(int token) {
-        this.token = token;
-    }
-
     public int getId() {
         return id;
     }
@@ -232,41 +224,8 @@ public class Playlist {
     public void setId(int id) {
         this.id = id;
     }
-
-    public Set<Room> getRoomsQueue() {
-        return roomsQueue;
-    }
-
-    public void setRoomsQueue(Set<Room> roomsQueue) {
-        this.roomsQueue = roomsQueue;
-    }
-
-    public Set<Room> getRoomsHistory() {
-        return roomsHistory;
-    }
-
-    public void setRoomsHistory(Set<Room> roomsHistory) {
-        this.roomsHistory = roomsHistory;
-    }
-
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setToken(Integer token) {
-        this.token = token;
-    }
-
-    public List<PlaylistEntry> getEntries() {
-        return entries;
-    }
-
-    public void setEntries(List<PlaylistEntry> entries) {
-        this.entries = entries;
     }
 
     public List<Song> getSongs() {
@@ -275,14 +234,6 @@ public class Playlist {
             songs.add(pe.getSong());
         }
         return songs;
-    }
-
-    public Set<User> getOwners() {
-        return owners;
-    }
-
-    public void setOwners(Set<User> owners) {
-        this.owners = owners;
     }
     public int getSongNumber(){
         return this.entries.size();

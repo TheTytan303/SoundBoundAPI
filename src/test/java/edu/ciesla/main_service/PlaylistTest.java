@@ -1,13 +1,9 @@
 package edu.ciesla.main_service;
 
-import edu.ciesla.main_service.database.models.Playlist;
+
 import edu.ciesla.main_service.database.models.Song;
 import edu.ciesla.main_service.database.models.User;
-import javafx.beans.binding.ObjectBinding;
 import org.apache.tomcat.util.json.JSONParser;
-import org.apache.tomcat.util.json.ParseException;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

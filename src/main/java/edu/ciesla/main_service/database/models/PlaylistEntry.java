@@ -34,7 +34,7 @@ public class PlaylistEntry {
 
 
 
-    public static List<PlaylistEntry> addPlaylistEntriesAtEnd(Playlist playlist, double position, List<Song> songs){
+    static List<PlaylistEntry> addPlaylistEntriesAtEnd(Playlist playlist, double position, List<Song> songs){
         List<PlaylistEntry> returnVale = new ArrayList<>();
         int i=1;
         Session session = HibernateConfig.getSessionFactory().openSession();
@@ -57,8 +57,7 @@ public class PlaylistEntry {
         session.close();
         return returnVale;
     }
-
-    public static List<PlaylistEntry> addPlaylistEntries(Playlist playlist, double position1, double position2, List<Song> songs){
+    static List<PlaylistEntry> addPlaylistEntries(Playlist playlist, double position1, double position2, List<Song> songs){
         List<PlaylistEntry> returnVale = new ArrayList<>();
         double dx = Math.abs(position2-position1)/((double)songs.size()+1);
         int i=1;
@@ -82,8 +81,7 @@ public class PlaylistEntry {
         session.close();
         return returnVale;
     }
-
-    public static List<PlaylistEntry> addPlaylistEntriesAtBeginning(Playlist playlist, double position, List<Song> songs){
+    static List<PlaylistEntry> addPlaylistEntriesAtBeginning(Playlist playlist, double position, List<Song> songs){
         List<PlaylistEntry> returnVale = new ArrayList<>();
         int i=-1;
         Session session = HibernateConfig.getSessionFactory().openSession();
@@ -113,40 +111,16 @@ public class PlaylistEntry {
     public int getId() {
         return id;
     }
-
     public void setId(int id) {
         this.id = id;
     }
-
-    public Playlist getPlaylist() {
-        return playlist;
-    }
-
-    public void setPlaylist(Playlist playlist) {
-        this.playlist = playlist;
-    }
-
     public Song getSong() {
         return song;
     }
-
     public void setSong(Song song) {
         this.song = song;
     }
-
     public double getPosition() {
         return position;
-    }
-
-    public void setPosition(double position) {
-        this.position = position;
-    }
-
-    public Timestamp getAddDate() {
-        return addDate;
-    }
-
-    public void setAddDate(Timestamp addDate) {
-        this.addDate = addDate;
     }
 }

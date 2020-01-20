@@ -429,12 +429,14 @@ public class APIContreoller {
             }
             if(!target.isHost(user)) return new ResponseEntity<>("User identified by this JWT cannot get Votes for this Room", HttpStatus.FORBIDDEN);
             Map<User, Song> votes = target.getVotes();
-            JSONArray returnVale = new JSONArray();
+            //JSONArray returnVale = new JSONArray();
+            JSONObject returnVale = new JSONObject();
             for(Map.Entry<User, Song> entry: votes.entrySet()){
-                JSONObject tmp = new JSONObject();
-                tmp.put("user",entry.getKey().getNickname());
-                tmp.put("song",entry.getValue().getId());
-                returnVale.put(tmp);
+                //JSONObject tmp = new JSONObject();
+                //tmp.put("user",entry.getKey().getNickname());
+                //tmp.put("song",entry.getValue().getId());
+                //tmp.put(entry.getKey().getNickname(),entry.getValue().getId());
+                returnVale.put(entry.getKey().getNickname(),entry.getValue().getId());
             }
             return new ResponseEntity<>(returnVale.toString(), HttpStatus.valueOf(200));
         } catch (Unidentified unidentified) {
