@@ -21,7 +21,7 @@ import java.util.*;
 @Entity
 @Table(name = "user", uniqueConstraints=@UniqueConstraint(columnNames = {"ID_user"}))
 public class User {
-
+    static String SERVER_PASS = "82CQCZxcDw";
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name = "ID_user", unique = true, nullable = false)
@@ -44,17 +44,19 @@ public class User {
     Set<Room> rooms = new HashSet<>();
 
     public User(){}
+
+
     public User(String nickname, String password){
         this.nickname =nickname;
         this.password = BCrypt.hashpw(password,BCrypt.gensalt(12));
     }
 
-
     private boolean checkPw(String password)throws JWTDecodeException {
         return BCrypt.checkpw(password,this.password);
     }
+
     private String generateToken(){
-        Algorithm algoritmHS = Algorithm.HMAC256("82CQCZxcDw");
+        Algorithm algoritmHS = Algorithm.HMAC256(SERVER_PASS);
         Map<String, Object> map = new HashMap<>();
         map.put("alg", "HMAC256");
         map.put("type", "JWT");
@@ -62,6 +64,20 @@ public class User {
         this.user_token = JWT.create().withIssuer("SnB").withHeader(map).withClaim("id",this.id).sign(algoritmHS);
         return user_token;
     }
+    public static User identifyUser(String token) throws Unidentified, JWTDecodeException {
+        Algorithm algorithm = Algorithm.HMAC256(SERVER_PASS);
+        JWTVerifier verifier = JWT.require(algorithm).withIssuer("SnB").build();
+        DecodedJWT jwt = verifier.verify(token);
+        int id = jwt.getClaim("id").asInt();
+        User user = getUser(id).get(0);
+        if(user == null){
+            throw new Unidentified("user Unidnetified");
+        }
+        return user;
+    }
+
+
+
     public String getToken() {
         return user_token;
     }
@@ -141,17 +157,7 @@ public class User {
         }
     }
 
-    public static User identifyUser(String token) throws Unidentified, JWTDecodeException {
-        Algorithm algorithm = Algorithm.HMAC256("82CQCZxcDw");
-        JWTVerifier verifier = JWT.require(algorithm).withIssuer("SnB").build();
-        DecodedJWT jwt = verifier.verify(token);
-        int id = jwt.getClaim("id").asInt();
-        User user = getUser(id).get(0);
-        if(user == null){
-            throw new Unidentified("user Unidnetified");
-        }
-        return user;
-    }
+
     //-------------------------------------------------------------------Getters/Setters::
 
     public int getId() {
